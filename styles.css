@@ -125,19 +125,6 @@ hr {
   filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.35));
 }
 
-.masthead-year {
-  position: absolute;
-  top: -6px;
-  right: 18px;
-  color: rgba(255, 255, 255, 0.28);
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  font-style: italic;
-  font-size: 64px;
-  transform: rotate(-3deg);
-  pointer-events: none;
-}
-
 .masthead-tagline {
   margin: 4px 20px 0;
   max-width: 40rem;
@@ -332,8 +319,13 @@ textarea {
   gap: 6px;
 }
 
-.check-row input {
-  width: auto;
+.check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid #888;
+  accent-color: var(--maroon);
 }
 
 .form-grid,
@@ -493,6 +485,13 @@ textarea {
   font-size: 11px;
   text-align: center;
   color: #333;
+}
+
+.footer-mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
 }
 
 .footer-links {
@@ -677,7 +676,4 @@ dd {
     grid-template-columns: 1fr;
   }
 
-  .masthead-year {
-    font-size: 44px;
-  }
 }

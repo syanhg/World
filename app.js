@@ -526,10 +526,8 @@ apiKeyInput.addEventListener("change", rememberApiKey);
 
 const today = new Date();
 const mastheadDate = document.querySelector("#masthead-date");
-const mastheadYear = document.querySelector("#masthead-year");
 const footerYear = document.querySelector("#footer-year");
 if (mastheadDate) mastheadDate.textContent = today.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
-if (mastheadYear) mastheadYear.textContent = String(today.getFullYear());
 if (footerYear) footerYear.textContent = String(today.getFullYear());
 
 restoreApiKey();
