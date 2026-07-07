@@ -132,8 +132,11 @@
       <div class="world-stage">
         <canvas id="worldCanvas" class="world-canvas"></canvas>
         <div class="stage-loading" id="stageLoading" hidden>
-          <span class="spinner" aria-hidden="true"></span>
-          <span id="stageLoadingText">Loading 3D world&hellip;</span>
+          <div class="loading-box">
+            <p id="stageLoadingText">Loading World Data&hellip;</p>
+            <div class="loading-bar"><span></span></div>
+            <p class="loading-hint">Please wait&hellip;</p>
+          </div>
         </div>
         <button class="beveled-button modal-close" id="closeModal" aria-label="Close world">Close</button>
         <div class="stage-hud">

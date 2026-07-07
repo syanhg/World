@@ -368,7 +368,7 @@ async function buildViewer(world) {
   const camera = new THREE.PerspectiveCamera(65, 1, 0.01, 2000);
   const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: true, alpha: true });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 
   const spark = new SparkRenderer({ renderer });
   scene.add(spark);
@@ -378,7 +378,7 @@ async function buildViewer(world) {
     onProgress: (event) => {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
-        stageLoadingText.textContent = `Loading 3D world… ${percent}%`;
+        stageLoadingText.textContent = percent < 100 ? `Loading World Data… ${percent}%` : "Preparing 3D View…";
       }
     }
   });
@@ -418,7 +418,7 @@ async function buildViewer(world) {
 async function openWorld3d(world) {
   stageLoading.hidden = false;
   stageLoading.classList.remove("is-error");
-  stageLoadingText.textContent = "Loading 3D world…";
+  stageLoadingText.textContent = "Loading World Data…";
 
   try {
     disposeViewer();
@@ -523,6 +523,8 @@ async function buildMiniViewer(canvas, spzUrl) {
   renderer.setAnimationLoop(animate);
 
   return {
+    renderer,
+    animate,
     dispose() {
       renderer.setAnimationLoop(null);
       splat.dispose();
@@ -531,11 +533,20 @@ async function buildMiniViewer(canvas, spzUrl) {
   };
 }
 
+function pauseMiniViewers() {
+  miniViewers.forEach((v) => v.renderer.setAnimationLoop(null));
+}
+
+function resumeMiniViewers() {
+  miniViewers.forEach((v) => v.renderer.setAnimationLoop(v.animate));
+}
+
 function openWorld(world) {
   if (viewer && viewer.worldId !== world.id) {
     disposeViewer();
   }
   resetStage();
+  pauseMiniViewers();
 
   activeWorld = world;
   document.querySelector("#modalCategory").textContent = world.public ? "Public Marble World" : "Private Marble World";
@@ -589,6 +600,7 @@ document.querySelector("#closeModal").addEventListener("click", () => modal.clos
 modal.addEventListener("close", () => {
   disposeViewer();
   resetStage();
+  resumeMiniViewers();
 });
 
 document.querySelector("#copyButton").addEventListener("click", async () => {
