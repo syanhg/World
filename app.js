@@ -21,12 +21,9 @@ const progressBar = document.querySelector("#progressBar");
 const statusTitle = document.querySelector("#statusTitle");
 const statusText = document.querySelector("#statusText");
 const modal = document.querySelector("#worldModal");
-const previewImage = document.querySelector("#worldPreview");
 const worldCanvas = document.querySelector("#worldCanvas");
 const stageLoading = document.querySelector("#stageLoading");
 const stageLoadingText = document.querySelector("#stageLoadingText");
-const stageMode = document.querySelector("#stageMode");
-const view3dButton = document.querySelector("#view3dButton");
 const searchInput = document.querySelector("#searchInput");
 const searchButton = document.querySelector("#searchButton");
 const categorySelect = document.querySelector("#categorySelect");
@@ -161,6 +158,7 @@ function matchesSearch(world) {
 function renderGallery() {
   const filtered = worlds.filter((world) => matchesFilter(world) && matchesSearch(world));
 
+  gallery.querySelectorAll(".catalog-viewer").forEach((canvas) => stopMiniViewer(canvas));
   gallery.innerHTML = "";
 
   if (!filtered.length) {
@@ -175,20 +173,24 @@ function renderGallery() {
   }
 
   filtered.forEach((world) => {
+    const hasSplat = Boolean(pickSpzUrl(world.spzUrls, PREVIEW_ORDER));
     const article = document.createElement("article");
     article.className = "catalog-entry";
     article.innerHTML = `
       <button type="button" aria-label="Open ${escapeHtml(world.title)}">
-        ${world.thumbnailUrl ? `<img class="catalog-thumb" src="${escapeAttribute(world.thumbnailUrl)}" alt="">` : `<div class="missing-thumb">Marble</div>`}
+        ${hasSplat ? `<canvas class="catalog-viewer" data-world-id="${escapeAttribute(world.id)}"></canvas>` : `<div class="missing-thumb">No 3D Yet</div>`}
         <div class="catalog-copy">
           <h3>${escapeHtml(world.title)}</h3>
-          <p>${escapeHtml(world.prompt || "World generated with Marble.")}</p>
           <span class="catalog-meta">${escapeHtml(world.model)} &middot; ${world.public ? "Public" : "Private"}</span>
         </div>
       </button>
     `;
     article.querySelector("button").addEventListener("click", () => openWorld(world));
     gallery.appendChild(article);
+
+    if (hasSplat) {
+      ensureMiniObserver().observe(article.querySelector(".catalog-viewer"));
+    }
   });
 }
 
@@ -309,20 +311,39 @@ async function loadWorlds() {
   }
 }
 
-function resetStageToPhoto() {
-  worldCanvas.hidden = true;
-  previewImage.hidden = false;
-  stageLoading.hidden = true;
-  stageMode.textContent = "World Labs Marble";
-  view3dButton.textContent = "View in 3D";
-}
+const PREVIEW_ORDER = ["100k", "500k", "full"];
+const DETAIL_ORDER = ["500k", "full", "100k"];
 
-function pickSpzUrl(spzUrls) {
+function pickSpzUrl(spzUrls, preferenceOrder = DETAIL_ORDER) {
   if (!spzUrls) return "";
-  for (const key of ["500k", "100k", "full"]) {
+  for (const key of preferenceOrder) {
     if (spzUrls[key]) return spzUrls[key];
   }
   return Object.values(spzUrls)[0] || "";
+}
+
+async function loadSparkModules() {
+  const [THREE, spark, addons] = await Promise.all([
+    import("three"),
+    import("@sparkjsdev/spark"),
+    import("three/addons/controls/OrbitControls.js")
+  ]);
+  return { THREE, SparkRenderer: spark.SparkRenderer, SplatMesh: spark.SplatMesh, OrbitControls: addons.OrbitControls };
+}
+
+function frameSplat(THREE, splat) {
+  const box = splat.getBoundingBox(true);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const radius = Math.max(size.x, size.y, size.z, 0.5) * 0.5;
+  return { center, radius };
+}
+
+// ---------- Main immersive viewer (the full-screen modal) ----------
+
+function resetStage() {
+  stageLoading.hidden = true;
+  stageLoading.classList.remove("is-error");
 }
 
 function disposeViewer() {
@@ -333,15 +354,6 @@ function disposeViewer() {
   viewer.splat.dispose();
   viewer.renderer.dispose();
   viewer = null;
-}
-
-async function loadSparkModules() {
-  const [THREE, spark, addons] = await Promise.all([
-    import("three"),
-    import("@sparkjsdev/spark"),
-    import("three/addons/controls/OrbitControls.js")
-  ]);
-  return { THREE, SparkRenderer: spark.SparkRenderer, SplatMesh: spark.SplatMesh, OrbitControls: addons.OrbitControls };
 }
 
 async function buildViewer(world) {
@@ -373,11 +385,7 @@ async function buildViewer(world) {
   scene.add(splat);
   await splat.initialized;
 
-  const box = splat.getBoundingBox(true);
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const radius = Math.max(size.x, size.y, size.z, 0.5) * 0.5;
-
+  const { center, radius } = frameSplat(THREE, splat);
   camera.position.set(center.x, center.y, center.z + radius * 1.6);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -407,74 +415,143 @@ async function buildViewer(world) {
   return { worldId: world.id, renderer, scene, camera, controls, splat, onResize };
 }
 
-async function toggleView3d() {
-  if (!activeWorld) return;
-
-  if (!worldCanvas.hidden) {
-    worldCanvas.hidden = true;
-    previewImage.hidden = false;
-    viewer?.renderer.setAnimationLoop(null);
-    stageMode.textContent = "World Labs Marble";
-    view3dButton.textContent = "View in 3D";
-    return;
-  }
-
-  if (viewer && viewer.worldId === activeWorld.id) {
-    previewImage.hidden = true;
-    worldCanvas.hidden = false;
-    viewer.renderer.setAnimationLoop(() => {
-      viewer.controls.update();
-      viewer.renderer.render(viewer.scene, viewer.camera);
-    });
-    stageMode.textContent = "Live 3D · spark.js";
-    view3dButton.textContent = "Back to Photo";
-    return;
-  }
-
-  const world = activeWorld;
+async function openWorld3d(world) {
   stageLoading.hidden = false;
+  stageLoading.classList.remove("is-error");
   stageLoadingText.textContent = "Loading 3D world…";
-  view3dButton.disabled = true;
 
   try {
     disposeViewer();
     viewer = await buildViewer(world);
-    if (world !== activeWorld) {
+    if (!activeWorld || activeWorld.id !== world.id) {
       disposeViewer();
       return;
     }
-    previewImage.hidden = true;
-    worldCanvas.hidden = false;
-    stageMode.textContent = "Live 3D · spark.js";
-    view3dButton.textContent = "Back to Photo";
-  } catch (error) {
-    setStatus("Viewer Error", error.message, 0);
-  } finally {
     stageLoading.hidden = true;
-    view3dButton.disabled = false;
+  } catch (error) {
+    stageLoadingText.textContent = error.message;
+    stageLoading.classList.add("is-error");
   }
+}
+
+// ---------- Mini catalog previews (auto-rotating, no controls) ----------
+
+const miniViewers = new Map();
+const miniTokens = new WeakMap();
+let miniObserver = null;
+
+function ensureMiniObserver() {
+  if (miniObserver) return miniObserver;
+  miniObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const canvas = entry.target;
+        if (entry.isIntersecting) {
+          const world = worlds.find((item) => item.id === canvas.dataset.worldId);
+          if (world) startMiniViewer(canvas, world);
+        } else {
+          stopMiniViewer(canvas);
+        }
+      });
+    },
+    { rootMargin: "150px" }
+  );
+  return miniObserver;
+}
+
+function startMiniViewer(canvas, world) {
+  if (miniViewers.has(canvas)) return;
+  const spzUrl = pickSpzUrl(world.spzUrls, PREVIEW_ORDER);
+  if (!spzUrl) return;
+
+  const token = { cancelled: false };
+  miniTokens.set(canvas, token);
+
+  buildMiniViewer(canvas, spzUrl).then((built) => {
+    if (token.cancelled) {
+      built.dispose();
+      return;
+    }
+    miniViewers.set(canvas, built);
+  }).catch(() => {});
+}
+
+function stopMiniViewer(canvas) {
+  const token = miniTokens.get(canvas);
+  if (token) token.cancelled = true;
+  const built = miniViewers.get(canvas);
+  if (built) {
+    built.dispose();
+    miniViewers.delete(canvas);
+  }
+}
+
+async function buildMiniViewer(canvas, spzUrl) {
+  const { THREE, SparkRenderer, SplatMesh } = await loadSparkModules();
+
+  const width = canvas.clientWidth || 108;
+  const height = canvas.clientHeight || 108;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, width / height, 0.01, 2000);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setSize(width, height, false);
+
+  const spark = new SparkRenderer({ renderer });
+  scene.add(spark);
+
+  const splat = new SplatMesh({ url: spzUrl });
+  scene.add(splat);
+  await splat.initialized;
+
+  const { center, radius } = frameSplat(THREE, splat);
+  let angle = Math.random() * Math.PI * 2;
+
+  function animate() {
+    angle += 0.004;
+    camera.position.set(
+      center.x + Math.sin(angle) * radius * 1.5,
+      center.y + radius * 0.2,
+      center.z + Math.cos(angle) * radius * 1.5
+    );
+    camera.lookAt(center);
+    renderer.render(scene, camera);
+  }
+
+  renderer.setAnimationLoop(animate);
+
+  return {
+    dispose() {
+      renderer.setAnimationLoop(null);
+      splat.dispose();
+      renderer.dispose();
+    }
+  };
 }
 
 function openWorld(world) {
   if (viewer && viewer.worldId !== world.id) {
     disposeViewer();
   }
-  resetStageToPhoto();
+  resetStage();
 
   activeWorld = world;
   document.querySelector("#modalCategory").textContent = world.public ? "Public Marble World" : "Private Marble World";
   document.querySelector("#modalTitle").textContent = world.title;
-  document.querySelector("#modalPrompt").textContent = world.prompt || "Generated with World Labs Marble.";
   document.querySelector("#modalProvider").textContent = world.model;
   document.querySelector("#modalStatus").textContent = world.status;
   document.querySelector("#worldId").textContent = world.id;
   document.querySelector("#openMarbleButton").href = world.marbleUrl || "#";
   document.querySelector("#modalAssets").textContent = summarizeAssets(world);
-  previewImage.src = world.thumbnailUrl || world.panoUrl || "";
-  previewImage.alt = world.title;
-  previewImage.classList.toggle("is-empty", !previewImage.src);
-  view3dButton.disabled = !Object.keys(world.spzUrls || {}).length;
   modal.showModal();
+
+  if (viewer && viewer.worldId === world.id) {
+    stageLoading.hidden = true;
+  } else {
+    openWorld3d(world);
+  }
 }
 
 function summarizeAssets(world) {
@@ -508,11 +585,10 @@ searchInput.addEventListener("keydown", (event) => {
 });
 
 document.querySelector("#forgetKeyButton").addEventListener("click", forgetApiKey);
-document.querySelector("#view3dButton").addEventListener("click", toggleView3d);
 document.querySelector("#closeModal").addEventListener("click", () => modal.close());
 modal.addEventListener("close", () => {
   disposeViewer();
-  resetStageToPhoto();
+  resetStage();
 });
 
 document.querySelector("#copyButton").addEventListener("click", async () => {

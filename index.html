@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#7a0000">
     <title>World Catalog</title>
+    <link rel="icon" href="logo1.png">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -129,22 +130,20 @@
 
     <dialog class="world-modal" id="worldModal">
       <div class="world-stage">
-        <img id="worldPreview" alt="">
-        <canvas id="worldCanvas" class="world-canvas" hidden></canvas>
+        <canvas id="worldCanvas" class="world-canvas"></canvas>
         <div class="stage-loading" id="stageLoading" hidden>
           <span class="spinner" aria-hidden="true"></span>
           <span id="stageLoadingText">Loading 3D world&hellip;</span>
         </div>
         <button class="beveled-button modal-close" id="closeModal" aria-label="Close world">Close</button>
         <div class="stage-hud">
-          <span id="stageMode">World Labs Marble</span>
+          <span id="stageMode">Live 3D &middot; spark.js</span>
           <span id="worldId">world</span>
         </div>
         <div class="stage-overlay">
           <div class="stage-overlay-text">
             <p class="eyebrow" id="modalCategory">Featured</p>
             <h2 id="modalTitle">World title</h2>
-            <p id="modalPrompt">Prompt text</p>
             <dl>
               <div><dt>Model</dt><dd id="modalProvider">marble-1.1</dd></div>
               <div><dt>Assets</dt><dd id="modalAssets">Marble URL</dd></div>
@@ -152,8 +151,7 @@
             </dl>
           </div>
           <div class="button-row modal-actions">
-            <button type="button" class="beveled-button beveled-primary" id="view3dButton">View in 3D</button>
-            <a class="beveled-button link-button" id="openMarbleButton" href="#" target="_blank" rel="noreferrer">Open on Marble</a>
+            <a class="beveled-button beveled-primary link-button" id="openMarbleButton" href="#" target="_blank" rel="noreferrer">Open on Marble</a>
             <button class="beveled-button" id="copyButton">Copy Link</button>
           </div>
         </div>

@@ -336,7 +336,7 @@ textarea {
 }
 
 .modal-actions {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 /* ---------- Status strip ---------- */
@@ -407,13 +407,13 @@ textarea {
   background: transparent;
 }
 
-.catalog-thumb {
+.catalog-viewer {
+  display: block;
   flex: 0 0 auto;
   width: 108px;
   height: 108px;
   border: 0;
-  object-fit: cover;
-  background: transparent;
+  background: linear-gradient(135deg, #f2f0ea, #e4ddca);
 }
 
 .missing-thumb {
@@ -431,18 +431,11 @@ textarea {
 }
 
 .catalog-copy h3 {
-  margin: 0 0 4px;
+  margin: 0;
   color: var(--link);
   font-size: 16px;
   line-height: 1.2;
   text-decoration: underline;
-}
-
-.catalog-copy p {
-  margin: 0;
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 1.35;
 }
 
 .catalog-meta {
@@ -531,17 +524,12 @@ textarea {
   background: linear-gradient(180deg, #f4f1ea, #ded5bd);
 }
 
-#worldPreview,
 .world-canvas {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   background: transparent;
-}
-
-#worldPreview.is-empty {
-  opacity: 0.5;
 }
 
 .stage-loading {
@@ -552,11 +540,21 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  padding: 0 40px;
+  text-align: center;
   color: #ffe9d6;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 13px;
   font-weight: 700;
   background: rgba(15, 10, 10, 0.72);
+}
+
+.stage-loading.is-error {
+  color: #ffd0c8;
+}
+
+.stage-loading.is-error .spinner {
+  display: none;
 }
 
 .spinner {
@@ -624,12 +622,6 @@ textarea {
   margin: 0 0 8px;
   font-size: 26px;
   line-height: 1.1;
-}
-
-.stage-overlay-text p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
 }
 
 .modal-actions {
