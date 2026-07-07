@@ -419,22 +419,44 @@ async function buildViewer(world) {
   return { worldId: world.id, renderer, scene, camera, controls, splat, onResize };
 }
 
+let loadToken = 0;
+
 async function openWorld3d(world) {
+  const myToken = ++loadToken;
   stageLoading.hidden = false;
   stageLoading.classList.remove("is-error");
   stageLoadingText.textContent = "Loading World Data…";
 
+  const slowNoticeTimer = setTimeout(() => {
+    if (loadToken === myToken) {
+      stageLoadingText.textContent = "Still loading… this world's file is taking a while over your connection.";
+    }
+  }, 15000);
+
   try {
     disposeViewer();
-    viewer = await buildViewer(world);
-    if (!activeWorld || activeWorld.id !== world.id) {
-      disposeViewer();
+    const built = await buildViewer(world);
+    clearTimeout(slowNoticeTimer);
+
+    // The user may have closed the modal or opened a different world while
+    // this was in flight — discard the finished build instead of leaking a
+    // renderer/animation loop nobody references anymore.
+    if (loadToken !== myToken || !modal.open || !activeWorld || activeWorld.id !== world.id) {
+      built.renderer.setAnimationLoop(null);
+      built.controls.dispose();
+      built.splat.dispose();
+      built.renderer.dispose();
       return;
     }
+
+    viewer = built;
     stageLoading.hidden = true;
   } catch (error) {
-    stageLoadingText.textContent = error.message;
-    stageLoading.classList.add("is-error");
+    clearTimeout(slowNoticeTimer);
+    if (loadToken === myToken) {
+      stageLoadingText.textContent = error.message;
+      stageLoading.classList.add("is-error");
+    }
   }
 }
 
@@ -463,26 +485,60 @@ function ensureMiniObserver() {
   return miniObserver;
 }
 
+// Cap how many catalog previews can be downloading at once. Splat files are
+// multi-megabyte, and letting a whole screen of tiles fetch simultaneously
+// starves bandwidth from whatever the user actually opens next (including
+// the full-screen viewer) — this was the main suspect behind loads that
+// never seemed to finish.
+const MAX_CONCURRENT_MINI_LOADS = 2;
+let activeMiniLoads = 0;
+const miniQueue = [];
+let mainViewerOpen = false;
+
+function runMiniQueue() {
+  if (mainViewerOpen) return;
+  while (activeMiniLoads < MAX_CONCURRENT_MINI_LOADS && miniQueue.length) {
+    miniQueue.shift()();
+  }
+}
+
 function startMiniViewer(canvas, world) {
-  if (miniViewers.has(canvas)) return;
+  if (miniViewers.has(canvas) || miniTokens.has(canvas)) return;
   const spzUrl = pickSpzUrl(world.spzUrls, PREVIEW_ORDER);
   if (!spzUrl) return;
 
   const token = { cancelled: false };
   miniTokens.set(canvas, token);
 
-  buildMiniViewer(canvas, spzUrl).then((built) => {
+  const run = () => {
     if (token.cancelled) {
-      built.dispose();
+      runMiniQueue();
       return;
     }
-    miniViewers.set(canvas, built);
-  }).catch(() => {});
+    activeMiniLoads++;
+    buildMiniViewer(canvas, spzUrl)
+      .then((built) => {
+        if (token.cancelled) {
+          built.dispose();
+        } else {
+          miniViewers.set(canvas, built);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        activeMiniLoads--;
+        runMiniQueue();
+      });
+  };
+
+  miniQueue.push(run);
+  runMiniQueue();
 }
 
 function stopMiniViewer(canvas) {
   const token = miniTokens.get(canvas);
   if (token) token.cancelled = true;
+  miniTokens.delete(canvas);
   const built = miniViewers.get(canvas);
   if (built) {
     built.dispose();
@@ -551,6 +607,7 @@ function openWorld(world) {
   }
   resetStage();
   pauseMiniViewers();
+  mainViewerOpen = true;
 
   activeWorld = world;
   document.querySelector("#modalTitle").textContent = world.title;
@@ -589,7 +646,9 @@ document.querySelector("#closeModal").addEventListener("click", () => modal.clos
 modal.addEventListener("close", () => {
   disposeViewer();
   resetStage();
+  mainViewerOpen = false;
   resumeMiniViewers();
+  runMiniQueue();
 });
 
 document.querySelector("#copyButton").addEventListener("click", async () => {
