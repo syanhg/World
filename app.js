@@ -354,7 +354,8 @@ async function buildViewer(world) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(65, 1, 0.01, 2000);
-  const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: true, alpha: true });
+  renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
   const spark = new SparkRenderer({ renderer });

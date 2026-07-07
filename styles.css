@@ -409,27 +409,25 @@ textarea {
 
 .catalog-thumb {
   flex: 0 0 auto;
-  width: 92px;
-  height: 92px;
-  border: 1px solid #999;
-  padding: 2px;
+  width: 108px;
+  height: 108px;
+  border: 0;
   object-fit: cover;
-  background: #fff;
+  background: transparent;
 }
 
 .missing-thumb {
   display: grid;
   flex: 0 0 auto;
-  width: 92px;
-  height: 92px;
-  border: 1px solid #999;
+  width: 108px;
+  height: 108px;
   place-items: center;
-  padding: 2px;
-  color: #fff;
+  color: #999;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--maroon-light), var(--maroon-dark));
+  background: #eee;
+  border: 1px dashed #ccc;
 }
 
 .catalog-copy h3 {
@@ -507,35 +505,30 @@ textarea {
 /* ---------- World modal ---------- */
 
 .world-modal {
-  width: min(920px, calc(100% - 20px));
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
   padding: 0;
-  border: 1px solid #333;
+  border: 0;
   color: var(--ink);
-  background: var(--paper);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.25);
+  background: #000;
+  box-shadow: none;
 }
 
 .world-modal::backdrop {
-  background: rgba(20, 10, 10, 0.55);
-}
-
-.modal-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-}
-
-.modal-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+  background: #000;
 }
 
 .world-stage {
   position: relative;
-  min-height: 380px;
-  background: #111;
-  border-right: 1px solid #333;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f4f1ea, #ded5bd);
 }
 
 #worldPreview,
@@ -543,13 +536,12 @@ textarea {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 380px;
-  object-fit: cover;
-  background: linear-gradient(135deg, var(--maroon-light), #2c4a5c);
+  object-fit: contain;
+  background: transparent;
 }
 
 #worldPreview.is-empty {
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 .stage-loading {
@@ -562,14 +554,14 @@ textarea {
   gap: 10px;
   color: #ffe9d6;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   background: rgba(15, 10, 10, 0.72);
 }
 
 .spinner {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border: 3px solid var(--gold);
   border-right-color: transparent;
   border-radius: 50%;
@@ -582,35 +574,67 @@ textarea {
   }
 }
 
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 6;
+}
+
 .stage-hud {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  z-index: 2;
+  left: 18px;
+  top: 18px;
+  z-index: 4;
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  color: #fff;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   font-weight: 700;
-  text-shadow: 0 1px 2px #000;
 }
 
-.world-detail {
-  padding: 22px 18px 18px;
+.stage-hud span {
+  padding: 3px 8px;
+  color: #333;
+  background: rgba(255, 255, 255, 0.82);
 }
 
-.world-detail h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
+.stage-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px;
+  background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.95) 58%);
+}
+
+.stage-overlay-text {
+  max-width: 560px;
+}
+
+.stage-overlay-text h2 {
+  margin: 0 0 8px;
+  font-size: 26px;
   line-height: 1.1;
 }
 
-.world-detail p {
+.stage-overlay-text p {
+  margin: 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.modal-actions {
+  flex: 0 0 auto;
+  width: min(360px, 100%);
 }
 
 .eyebrow {
@@ -623,7 +647,7 @@ textarea {
 }
 
 dl {
-  margin: 16px 0;
+  margin: 12px 0;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 12px;
 }
@@ -632,7 +656,7 @@ dl div {
   display: grid;
   grid-template-columns: 74px 1fr;
   gap: 10px;
-  padding: 7px 0;
+  padding: 6px 0;
   border-top: 1px solid #ddd;
 }
 
@@ -672,8 +696,14 @@ dd {
     column-count: 1;
   }
 
-  .modal-layout {
-    grid-template-columns: 1fr;
+  .stage-overlay {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px;
   }
 
+  .modal-actions {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
 }
