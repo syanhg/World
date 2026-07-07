@@ -549,13 +549,9 @@ function openWorld(world) {
   pauseMiniViewers();
 
   activeWorld = world;
-  document.querySelector("#modalCategory").textContent = world.public ? "Public Marble World" : "Private Marble World";
   document.querySelector("#modalTitle").textContent = world.title;
-  document.querySelector("#modalProvider").textContent = world.model;
-  document.querySelector("#modalStatus").textContent = world.status;
   document.querySelector("#worldId").textContent = world.id;
   document.querySelector("#openMarbleButton").href = world.marbleUrl || "#";
-  document.querySelector("#modalAssets").textContent = summarizeAssets(world);
   modal.showModal();
 
   if (viewer && viewer.worldId === world.id) {
@@ -563,16 +559,6 @@ function openWorld(world) {
   } else {
     openWorld3d(world);
   }
-}
-
-function summarizeAssets(world) {
-  const assets = [];
-  if (world.marbleUrl) assets.push("Marble URL");
-  if (world.thumbnailUrl) assets.push("thumbnail");
-  if (world.panoUrl) assets.push("pano");
-  if (world.colliderMeshUrl) assets.push("GLB collider");
-  if (Object.keys(world.spzUrls).length) assets.push("SPZ splats");
-  return assets.join(", ") || "No assets returned yet";
 }
 
 function applyCategoryFilter() {
