@@ -3,113 +3,142 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#7d1f25">
-    <title>Marbleboard - AI World Gallery</title>
+    <meta name="theme-color" content="#7a0000">
+    <title>World Catalog</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div class="status-bar" aria-hidden="true">
-      <span class="status-time">9:41</span>
-      <div class="status-icons">
-        <span class="signal-bars"><span></span><span></span><span></span><span></span></span>
-        <span class="battery"><span class="battery-body"><span class="battery-fill"></span></span><span class="battery-tip"></span></span>
-      </div>
-    </div>
-    <header class="ios-bar">
-      <button class="icon-button" id="menuButton" aria-label="Open collections">
-        <span></span><span></span><span></span>
-      </button>
-      <h1>Marbleboard</h1>
-      <button class="nav-button" id="newWorldTop">Create</button>
-    </header>
-
-    <main>
-      <section class="compose-panel" aria-label="Create a world">
-        <div class="compose-copy">
-          <p class="eyebrow">AI generated worlds</p>
-          <h2>Pin worlds, not pictures.</h2>
-          <p>
-            Create persistent Marble worlds from text, collect the finished results, then
-            publish them into a public static gallery.
-          </p>
+    <div class="page-shell">
+      <header class="masthead">
+        <div class="masthead-bar">
+          <a href="#gallery">World Catalog</a>
+          <a href="#compose">Generate</a>
+          <a href="https://docs.worldlabs.ai/api" target="_blank" rel="noreferrer">API Docs</a>
+          <a href="https://marble.worldlabs.ai" target="_blank" rel="noreferrer">Open Marble</a>
+          <span class="masthead-date" id="masthead-date">JAN 1</span>
         </div>
-        <form class="world-form" id="worldForm">
-          <label for="apiKey">World Labs API key required</label>
-          <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="Paste your own WLT API key">
-          <p class="field-hint">Stored only in your browser's local storage. Never sent anywhere except api.worldlabs.ai.</p>
+        <div class="masthead-title">
+          <img src="logo1.png" alt="" class="brand-mark" width="64" height="64">
+          <img src="logo2.png" alt="World Catalog" class="brand-wordmark">
+          <span class="masthead-year" id="masthead-year" aria-hidden="true">2026</span>
+        </div>
+        <p class="masthead-tagline">The Internet's catalog of AI-generated worlds. Bring your own World Labs API key &mdash; nothing runs on our servers.</p>
+      </header>
 
-          <label for="prompt">World prompt</label>
-          <textarea id="prompt" name="prompt" rows="4" maxlength="220" placeholder="A marble quarry city at dusk, red lanterns, navigable stairways, hidden observatory"></textarea>
+      <div class="layout">
+        <nav class="sidebar" aria-label="World Catalog navigation">
+          <div class="sidebar-box">
+            <label for="searchInput">Find It</label>
+            <div class="sidebar-search-row">
+              <input id="searchInput" type="search" placeholder="marble quarry...">
+              <button type="button" class="go-button" id="searchButton">Go</button>
+            </div>
+          </div>
 
-          <div class="form-grid">
-            <label>
-              Model
-              <select id="model" name="model">
+          <ul class="sidebar-links">
+            <li><a href="#compose">Generate a World</a></li>
+            <li><a href="#gallery">World Catalog</a></li>
+            <li><a href="https://platform.worldlabs.ai" target="_blank" rel="noreferrer">API Platform</a></li>
+            <li><a href="https://docs.worldlabs.ai/api" target="_blank" rel="noreferrer">World API Docs</a></li>
+            <li><a href="https://marble.worldlabs.ai" target="_blank" rel="noreferrer">Open Marble</a></li>
+          </ul>
+
+          <hr>
+
+          <div class="sidebar-box">
+            <label for="categorySelect">Browse By Category</label>
+            <div class="sidebar-search-row">
+              <select id="categorySelect">
+                <option value="all">Everything</option>
+                <option value="public">Public</option>
+                <option value="private">Private</option>
                 <option value="marble-1.1">marble-1.1</option>
                 <option value="marble-1.1-plus">marble-1.1-plus</option>
-                <option value="marble-1.0">marble-1.0</option>
-                <option value="marble-1.0-draft">marble-1.0-draft</option>
               </select>
-            </label>
-            <label>
-              Display name
-              <input id="displayName" name="displayName" maxlength="64" placeholder="Mystical Forest">
-            </label>
+              <button type="button" class="go-button" id="categoryGoButton">Go</button>
+            </div>
           </div>
 
-          <label class="check-row">
-            <input id="publicWorld" name="publicWorld" type="checkbox" checked>
-            Public in Marble
-          </label>
+          <hr>
 
-          <div class="button-row">
-            <button type="submit" class="primary-button">Generate with Marble</button>
-            <button type="button" class="secondary-button" id="loadWorldsButton">Load My Worlds</button>
-          </div>
-        </form>
-      </section>
+          <p class="sidebar-note">Each visitor supplies their own World Labs API key. It is saved only in this browser's local storage &mdash; this static page never ships with, or transmits your key anywhere besides, api.worldlabs.ai.</p>
+          <button type="button" class="beveled-button sidebar-danger" id="forgetKeyButton">Forget Saved Key</button>
+        </nav>
 
-      <section class="status-strip" aria-live="polite">
-        <div>
-          <strong id="statusTitle">Ready</strong>
-          <span id="statusText">Each user must manually enter their own World Labs API key to generate or load worlds.</span>
-        </div>
-        <div class="progress-shell" aria-hidden="true">
-          <span id="progressBar"></span>
-        </div>
-      </section>
+        <main class="content">
+          <section class="compose-panel" id="compose" aria-label="Create a world">
+            <h2 class="section-tab"><span class="tab-arrow">&#9661;</span> Generate a World</h2>
+            <form class="world-form" id="worldForm">
+              <label for="apiKey">World Labs API Key (required)</label>
+              <input id="apiKey" name="apiKey" type="password" autocomplete="off" placeholder="Paste your own WLT API key">
+              <p class="field-hint">Stored only in your browser. Never bundled with this site.</p>
 
-      <nav class="category-rail" aria-label="World filters">
-        <button class="filter-chip is-active" data-filter="all">Everything</button>
-        <button class="filter-chip" data-filter="public">Public</button>
-        <button class="filter-chip" data-filter="private">Private</button>
-        <button class="filter-chip" data-filter="marble-1.1">marble-1.1</button>
-        <button class="filter-chip" data-filter="marble-1.1-plus">marble-1.1-plus</button>
-      </nav>
+              <label for="prompt">World Prompt</label>
+              <textarea id="prompt" name="prompt" rows="4" maxlength="220" placeholder="A marble quarry city at dusk, red lanterns, navigable stairways, hidden observatory"></textarea>
 
-      <section class="gallery" id="gallery" aria-label="Published AI worlds"></section>
-    </main>
+              <div class="form-grid">
+                <label>
+                  Model
+                  <select id="model" name="model">
+                    <option value="marble-1.1">marble-1.1</option>
+                    <option value="marble-1.1-plus">marble-1.1-plus</option>
+                    <option value="marble-1.0">marble-1.0</option>
+                    <option value="marble-1.0-draft">marble-1.0-draft</option>
+                  </select>
+                </label>
+                <label>
+                  Display Name
+                  <input id="displayName" name="displayName" maxlength="64" placeholder="Mystical Forest">
+                </label>
+              </div>
 
-    <aside class="drawer" id="drawer" aria-hidden="true">
-      <div class="drawer-card">
-        <button class="close-button" id="closeDrawer" aria-label="Close collections">x</button>
-        <h2>Collections</h2>
-        <a href="#gallery">API Worlds</a>
-        <a href="https://platform.worldlabs.ai" target="_blank" rel="noreferrer">API Platform</a>
-        <a href="https://docs.worldlabs.ai/api" target="_blank" rel="noreferrer">World API Docs</a>
-        <a href="https://marble.worldlabs.ai" target="_blank" rel="noreferrer">Open Marble</a>
-        <button type="button" class="drawer-danger" id="forgetKeyButton">Forget saved API key</button>
-        <p>Each user manually enters their own key. This static page does not ship with a shared API key.</p>
+              <label class="check-row">
+                <input id="publicWorld" name="publicWorld" type="checkbox" checked>
+                List publicly in Marble
+              </label>
+
+              <div class="button-row">
+                <button type="submit" class="beveled-button beveled-primary">Generate World</button>
+                <button type="button" class="beveled-button" id="loadWorldsButton">Load My Worlds</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="status-strip" aria-live="polite">
+            <div>
+              <strong id="statusTitle">Ready</strong>
+              <span id="statusText">Each user must manually enter their own World Labs API key to generate or load worlds.</span>
+            </div>
+            <div class="progress-shell" aria-hidden="true">
+              <span id="progressBar"></span>
+            </div>
+          </section>
+
+          <h2 class="section-tab" id="gallery-heading"><span class="tab-arrow">&#9661;</span> World Catalog</h2>
+          <section class="gallery" id="gallery" aria-label="Published AI worlds"></section>
+        </main>
       </div>
-    </aside>
+
+      <footer class="site-footer">
+        <p class="footer-links">
+          <a href="#compose">Generate</a> | <a href="#gallery">Catalog</a> | <a href="https://platform.worldlabs.ai" target="_blank" rel="noreferrer">API Platform</a> | <a href="https://docs.worldlabs.ai/api" target="_blank" rel="noreferrer">API Docs</a> | <a href="https://marble.worldlabs.ai" target="_blank" rel="noreferrer">Open Marble</a>
+        </p>
+        <p class="footer-copy">Copyright &copy; <span id="footer-year">2026</span> World Catalog. Not affiliated with Apple Computer, Inc. or World Labs, Inc.<br>Worlds generated via the World Labs Marble API using your own key. Best viewed at 1024&times;768.</p>
+      </footer>
+    </div>
 
     <dialog class="world-modal" id="worldModal">
-      <button class="close-button modal-close" id="closeModal" aria-label="Close world">x</button>
+      <button class="beveled-button modal-close" id="closeModal" aria-label="Close world">Close</button>
       <div class="modal-layout">
         <div class="world-stage">
           <img id="worldPreview" alt="">
+          <canvas id="worldCanvas" class="world-canvas" hidden></canvas>
+          <div class="stage-loading" id="stageLoading" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span id="stageLoadingText">Loading 3D world&hellip;</span>
+          </div>
           <div class="stage-hud">
-            <span>World Labs Marble</span>
+            <span id="stageMode">World Labs Marble</span>
             <span id="worldId">world</span>
           </div>
         </div>
@@ -122,16 +151,24 @@
             <div><dt>Assets</dt><dd id="modalAssets">Marble URL</dd></div>
             <div><dt>Status</dt><dd id="modalStatus">Published</dd></div>
           </dl>
-          <div class="button-row">
-            <a class="primary-button link-button" id="openMarbleButton" href="#" target="_blank" rel="noreferrer">Open World</a>
-            <button class="secondary-button" id="copyButton">Copy Link</button>
+          <div class="button-row modal-actions">
+            <button type="button" class="beveled-button beveled-primary" id="view3dButton">View in 3D</button>
+            <a class="beveled-button link-button" id="openMarbleButton" href="#" target="_blank" rel="noreferrer">Open on Marble</a>
+            <button class="beveled-button" id="copyButton">Copy Link</button>
           </div>
         </div>
       </div>
     </dialog>
 
-    <div class="home-indicator" aria-hidden="true"></div>
-
-    <script src="app.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+          "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.1.0/spark.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
