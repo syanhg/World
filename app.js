@@ -311,8 +311,12 @@ async function loadWorlds() {
   }
 }
 
+// Prefer the smallest splat tier everywhere. Gaussian splat rendering cost
+// scales with point count, and "500k"/"full" tiers are heavy enough to make
+// the full-screen viewer stutter on most laptops — "100k" stays smooth while
+// still reading as the same world.
 const PREVIEW_ORDER = ["100k", "500k", "full"];
-const DETAIL_ORDER = ["500k", "full", "100k"];
+const DETAIL_ORDER = ["100k", "500k", "full"];
 
 function pickSpzUrl(spzUrls, preferenceOrder = DETAIL_ORDER) {
   if (!spzUrls) return "";
@@ -366,11 +370,11 @@ async function buildViewer(world) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(65, 1, 0.01, 2000);
-  const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: false, alpha: true });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(1);
 
-  const spark = new SparkRenderer({ renderer });
+  const spark = new SparkRenderer({ renderer, maxStdDev: Math.sqrt(5) });
   scene.add(spark);
 
   const splat = new SplatMesh({
@@ -494,12 +498,12 @@ async function buildMiniViewer(canvas, spzUrl) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, width / height, 0.01, 2000);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(1);
   renderer.setSize(width, height, false);
 
-  const spark = new SparkRenderer({ renderer });
+  const spark = new SparkRenderer({ renderer, maxStdDev: Math.sqrt(5) });
   scene.add(spark);
 
   const splat = new SplatMesh({ url: spzUrl });
@@ -550,7 +554,6 @@ function openWorld(world) {
 
   activeWorld = world;
   document.querySelector("#modalTitle").textContent = world.title;
-  document.querySelector("#worldId").textContent = world.id;
   document.querySelector("#openMarbleButton").href = world.marbleUrl || "#";
   modal.showModal();
 
