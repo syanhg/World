@@ -566,7 +566,6 @@ textarea {
   color: #111;
   font-family: Arial, Helvetica, sans-serif;
   text-align: center;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
 }
 
 .loading-box p {
@@ -627,15 +626,14 @@ textarea {
   bottom: 18px;
   z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
   width: fit-content;
   max-width: calc(100% - 36px);
   padding: 16px 20px;
   border: 2px outset #d8d8d8;
   background: linear-gradient(#f7f7f7, #d4d4d4);
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
 }
 
 .stage-overlay-text {
@@ -681,7 +679,6 @@ textarea {
   }
 
   .stage-overlay {
-    flex-direction: column;
     align-items: stretch;
     width: auto;
     padding: 18px;

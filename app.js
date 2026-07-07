@@ -353,6 +353,8 @@ function resetStage() {
 function disposeViewer() {
   if (!viewer) return;
   window.removeEventListener("resize", viewer.onResize);
+  window.removeEventListener("keydown", viewer.onKeyDown);
+  window.removeEventListener("keyup", viewer.onKeyUp);
   viewer.renderer.setAnimationLoop(null);
   viewer.controls.dispose();
   viewer.splat.dispose();
@@ -411,12 +413,70 @@ async function buildViewer(world) {
   window.addEventListener("resize", onResize);
   onResize();
 
+  const pressedKeys = new Set();
+  const moveKeys = new Set([
+    "w", "a", "s", "d",
+    "arrowup", "arrowdown", "arrowleft", "arrowright"
+  ]);
+
+  function onKeyDown(event) {
+    const key = event.key.toLowerCase();
+    if (!moveKeys.has(key)) return;
+    pressedKeys.add(key);
+    event.preventDefault();
+  }
+
+  function onKeyUp(event) {
+    pressedKeys.delete(event.key.toLowerCase());
+  }
+
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+
+  const forwardVec = new THREE.Vector3();
+  const rightVec = new THREE.Vector3();
+  const moveVec = new THREE.Vector3();
+  const flySpeed = radius * 0.8;
+
+  function applyKeyboardMovement(delta) {
+    let forwardInput = 0;
+    let rightInput = 0;
+    if (pressedKeys.has("w") || pressedKeys.has("arrowup")) forwardInput += 1;
+    if (pressedKeys.has("s") || pressedKeys.has("arrowdown")) forwardInput -= 1;
+    if (pressedKeys.has("d") || pressedKeys.has("arrowright")) rightInput += 1;
+    if (pressedKeys.has("a") || pressedKeys.has("arrowleft")) rightInput -= 1;
+    if (!forwardInput && !rightInput) return;
+
+    camera.getWorldDirection(forwardVec);
+    rightVec.crossVectors(forwardVec, camera.up).normalize();
+
+    moveVec.set(0, 0, 0);
+    moveVec.addScaledVector(forwardVec, forwardInput * flySpeed * delta);
+    moveVec.addScaledVector(rightVec, rightInput * flySpeed * delta);
+
+    camera.position.add(moveVec);
+    controls.target.add(moveVec);
+  }
+
+  const clock = new THREE.Clock();
+
   renderer.setAnimationLoop(() => {
+    applyKeyboardMovement(clock.getDelta());
     controls.update();
     renderer.render(scene, camera);
   });
 
-  return { worldId: world.id, renderer, scene, camera, controls, splat, onResize };
+  return {
+    worldId: world.id,
+    renderer,
+    scene,
+    camera,
+    controls,
+    splat,
+    onResize,
+    onKeyDown,
+    onKeyUp
+  };
 }
 
 let loadToken = 0;
@@ -442,6 +502,9 @@ async function openWorld3d(world) {
     // this was in flight — discard the finished build instead of leaking a
     // renderer/animation loop nobody references anymore.
     if (loadToken !== myToken || !modal.open || !activeWorld || activeWorld.id !== world.id) {
+      window.removeEventListener("resize", built.onResize);
+      window.removeEventListener("keydown", built.onKeyDown);
+      window.removeEventListener("keyup", built.onKeyUp);
       built.renderer.setAnimationLoop(null);
       built.controls.dispose();
       built.splat.dispose();
