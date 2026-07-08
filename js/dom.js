@@ -1,0 +1,27 @@
+// Single source of DOM element references, queried once at module load.
+export const gallery = document.querySelector("#gallery");
+export const form = document.querySelector("#worldForm");
+export const apiKeyInput = document.querySelector("#apiKey");
+export const promptInput = document.querySelector("#prompt");
+export const modelInput = document.querySelector("#model");
+export const displayNameInput = document.querySelector("#displayName");
+export const publicWorldInput = document.querySelector("#publicWorld");
+export const loadWorldsButton = document.querySelector("#loadWorldsButton");
+export const progressBar = document.querySelector("#progressBar");
+export const statusTitle = document.querySelector("#statusTitle");
+export const statusText = document.querySelector("#statusText");
+export const modal = document.querySelector("#worldModal");
+export const worldCanvas = document.querySelector("#worldCanvas");
+export const stageLoading = document.querySelector("#stageLoading");
+export const stageLoadingText = document.querySelector("#stageLoadingText");
+export const searchInput = document.querySelector("#searchInput");
+export const searchButton = document.querySelector("#searchButton");
+export const categorySelect = document.querySelector("#categorySelect");
+export const categoryGoButton = document.querySelector("#categoryGoButton");
+export const modalTitle = document.querySelector("#modalTitle");
+export const openMarbleButton = document.querySelector("#openMarbleButton");
+export const copyButton = document.querySelector("#copyButton");
+export const closeModalButton = document.querySelector("#closeModal");
+export const forgetKeyButton = document.querySelector("#forgetKeyButton");
+export const mastheadDate = document.querySelector("#masthead-date");
+export const footerYear = document.querySelector("#footer-year");
